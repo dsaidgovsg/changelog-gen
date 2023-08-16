@@ -187,7 +187,7 @@ def args_parse():
     )
     parser.add_argument("commits")
     parser.add_argument("-t", "--title", default="REPLACE_WITH_YOUR_RELEASE_TAG")
-    parser.add_argument("-c", "--conf", default=".clgen.yaml")
+    parser.add_argument("-c", "--conf", default=".clog.yaml")
     parser.add_argument("-r", "--repo", default=".")
     return parser.parse_args()
 
