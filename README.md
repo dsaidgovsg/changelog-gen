@@ -43,7 +43,7 @@ to auto-format the entire code base.
 You will need to install the package first. To do so locally (if you git-cloned the repository):
 
 ```bash
-python -m pip install -e .
+pip install -e .
 ```
 
 You should restart the terminal session to ensure `cc-changelog-gen` is within `PATH`.
