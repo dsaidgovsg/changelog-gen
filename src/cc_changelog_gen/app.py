@@ -4,8 +4,18 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 from git import Repo
 import re
+import sys
 from typing import Dict, List
 import yaml
+
+
+class Color:
+    WARNING = "\033[93m"
+    ENDC = "\033[0m"
+
+
+def print_color(color: Color, text: str, file=sys.stdout):
+    print(f"{color}{text}{Color.ENDC}", file=file)
 
 
 @dataclass
@@ -194,13 +204,20 @@ def args_parse():
 
 def main():
     args = args_parse()
+    conf_dict = {}
 
     # YAML
-    with open(args.conf, "r") as f:
-        conf_dict = yaml.safe_load(f)
+    try:
+        with open(args.conf, "r") as f:
+            conf_dict = yaml.safe_load(f)
+    except OSError:
+        print_color(
+            Color.WARNING,
+            f"Missing '{args.conf}' config file, using default values...",
+            file=sys.stderr,
+        )
 
     c = Conf(**conf_dict)
-
     repo = Repo(args.repo)
     commits = list(repo.iter_commits(f"{args.commits}"))
 

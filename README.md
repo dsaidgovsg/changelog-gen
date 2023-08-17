@@ -38,6 +38,17 @@ black .
 
 to auto-format the entire code base.
 
+## `.clog.yaml` Configuration
+
+The parsing of the commit messages (in particular the titles) can be controlled via the values set
+by `.clog.yaml` in the current working directory (or you can override via `-c /path/to/.clog.yaml`).
+
+As the parsing feature set is still growing and fairly unstable, there will not be any
+specifications yet and do expect new / breaking changes to take place (though any major changes will
+be tagged.)
+
+Refer to the example [`.clog.yaml`](.clog.yaml) for usage at the moment.
+
 ## CLI Example
 
 You will need to install the package first. To do so locally (if you git-cloned the repository):
