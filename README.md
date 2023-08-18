@@ -68,3 +68,59 @@ cc-changelog-gen -t v1.0.0 HEAD
 # Complex example pointing to another directory and between commits
 cc-changelog-gen -t v1.0.0 -r ./path/to/repo aaaabbb^..ccccddd
 ```
+
+### Special Commits Range Syntax
+
+Since it is very common to want to generate changelogs between a previous semver tag version to
+current `HEAD`, a special syntax `~..` was provided to allow finding the latest previous semver tag
+in the specified repository, depending on the given title value (`-t`, `--title` flag).
+
+#### Scenario 1a
+
+Given the repository has tags (`v` or `V` prefix is acceptable):
+
+```python
+["1.0.0", "1.1.0", "1.1.5", "1.2.0", "v2.0.0", "invalid-semver-tags-are-ignored"]
+```
+
+and the given `-t` value is `1.1.7`:
+
+```bash
+cc-changelog-gen -t 1.1.7 ~..HEAD
+```
+
+The closest previous semver tag is `1.1.5`, so the above is equivalent to:
+
+```bash
+cc-changelog-gen -t 1.1.7 1.1.5..HEAD
+```
+
+#### Scenario 1b
+
+Continuing from Scenario 1a, if no `-t` value is given:
+
+```bash
+cc-changelog-gen ~..HEAD
+```
+
+It will simply use the latest semver tag, which is `v2.0.0` so the above is equivalent to:
+
+```bash
+cc-changelog-gen v2.0.0..HEAD
+```
+
+#### Scenario 2
+
+If the repository has no valid semver tags, it doesn't matter if `-t` value is given or not.
+
+So given:
+
+```bash
+cc-changelog-gen ~..HEAD
+```
+
+The `~..` is simply dropped, to start from the beginning of all commits, equivalent to:
+
+```bash
+cc-changelog-gen HEAD
+```
