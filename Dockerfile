@@ -8,8 +8,6 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-RUN pip install -r requirements.txt
-
 RUN --mount=source=.git,target=./.git,type=bind \
     pip install -e .
 
