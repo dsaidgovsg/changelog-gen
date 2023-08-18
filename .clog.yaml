@@ -19,6 +19,10 @@ breaking_change_line_captures:
   - 'BREAKING CHANGE:'
 breaking_change_line_captures_after_trim: '\s+'
 
+# General title trimming
+title_left_trim: '\s+'
+title_right_trim: '\s+'
+
 # Key to match the exact string within 1st regex group of any entry in `type_captures`
 # Value must correspond to a valid `headings` key
 supported_types:

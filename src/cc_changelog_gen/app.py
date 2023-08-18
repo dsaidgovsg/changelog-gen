@@ -27,6 +27,8 @@ class Conf:
     type_captures_allow_breaking_change_group: bool = True
     breaking_change_line_captures: List[str] = field(default_factory=list)
     breaking_change_line_captures_after_trim: str = r"\s+"
+    title_left_trim: str = r"\s+"
+    title_right_trim: str = r"\s+"
     supported_types: Dict[str, str] = field(default_factory=dict)
     headings: OrderedDict[str, str] = field(default_factory=dict)
     others_heading: str = "Others"
@@ -126,6 +128,8 @@ def process_type_capture(
     type_captures: List[str],
     type_captures_after_trim: str,
     type_captures_allow_breaking_change_group: bool,
+    title_left_trim: str,
+    title_right_trim: str,
     supported_types: Dict[str, str],
     capitalize_title_first_char: bool,
 ) -> TypeCaptureOutput:
@@ -157,11 +161,12 @@ def process_type_capture(
             else:
                 type_match = TypeMatch.OTHERS
 
-            title = enhance_title(title, capitalize_title_first_char)
-
     if not already_type_captured:
-        title = enhance_title(title, capitalize_title_first_char)
         type_match = TypeMatch.OTHERS
+
+    title = re.sub(rf"^{title_left_trim}", "", title)
+    title = re.sub(rf"{title_right_trim}$", "", title)
+    title = enhance_title(title, capitalize_title_first_char)
 
     return TypeCaptureOutput(
         title=title,
@@ -238,6 +243,8 @@ def main():
             type_captures=c.type_captures,
             type_captures_after_trim=c.type_captures_after_trim,
             type_captures_allow_breaking_change_group=c.breaking_change_line_captures_after_trim,
+            title_left_trim=c.title_left_trim,
+            title_right_trim=c.title_right_trim,
             supported_types=c.supported_types,
             capitalize_title_first_char=c.capitalize_title_first_char,
         )
