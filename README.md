@@ -124,3 +124,31 @@ The `~..` is simply dropped, to start from the beginning of all commits, equival
 ```bash
 cc-changelog-gen HEAD
 ```
+
+## Docker Build and Usage
+
+To build the image from scratch:
+
+```bash
+IMAGE_TAG="latest"
+docker build . -t "dsaidgovsg/cc-changelog-gen:${IMAGE_TAG}"
+```
+
+The entrypoint of the image is set to `cc-changelog-gen`, so to run with the CLI within the image:
+
+```bash
+docker run --rm -it -v /host/git/repo:/app/repo:ro -v /host/.clog.yaml:/app/.clog.yaml:ro "dsaidgovsg/cc-changelog-gen:${IMAGE_TAG}" \
+    -t "SOME_TITLE" -r /app/repo ~..HEAD
+```
+
+### Docker Image Caveat
+
+`git`'s' `safe.directory` configuration by default to allow all directories from any users. This is
+because the most likely use case is to mount the host git repo into the running container, and this
+mounted directory is very likely to have a different user from the `clog` non-root user in the
+image.
+
+This setting can be found in `/app/.gitconfig` and amendable as `clog` non-root image user.
+
+For more details on `safe.directory`:
+<https://git-scm.com/docs/git-config/2.35.2#Documentation/git-config.txt-safedirectory>
