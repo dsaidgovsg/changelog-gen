@@ -6,8 +6,18 @@ from git import Repo, TagReference
 import re
 import semver
 import sys
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 import yaml
+
+ALLOWED_SCHEME = ["file", "http", "https"]
+
+
+class SchemeException(Exception):
+    def __init__(self, scheme: str):
+        self.scheme = scheme
+
+    def __str__(self) -> str:
+        return f"Invalid scheme '{self.scheme}' to retrieve content from"
 
 
 class Color:
@@ -293,14 +303,29 @@ def process_commits_str(
     return commits_str
 
 
+def load_conf(conf_path: str) -> Dict[str, Any]:
+    from urllib.parse import urlparse
+    import urllib.request
+    import os
+
+    conf_url = urlparse(conf_path)
+
+    if conf_url.scheme and conf_url.scheme not in ALLOWED_SCHEME:
+        raise ValueError("Protocol of given file is invalid")
+
+    if not conf_url.scheme:
+        conf_url = urlparse(f"file://{os.path.abspath(conf_path)}")
+
+    f = urllib.request.urlopen(conf_url.geturl()).read()
+    return yaml.safe_load(f)
+
+
 def main():
     args = args_parse()
     conf_dict = {}
 
-    # YAML
     try:
-        with open(args.conf, "r") as f:
-            conf_dict = yaml.safe_load(f)
+        conf_dict = load_conf(args.conf)
     except OSError:
         print_color(
             Color.WARNING,
