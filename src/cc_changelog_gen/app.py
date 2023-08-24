@@ -3,10 +3,13 @@ from collections import OrderedDict
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from git import Repo, TagReference
+import os
 import re
 import semver
 import sys
 from typing import Any, Dict, List, Optional
+from urllib.parse import urlparse
+import urllib.request
 import yaml
 
 ALLOWED_SCHEME = ["file", "http", "https"]
@@ -92,10 +95,6 @@ class MarkdownContent:
 
 
 def load_conf(conf_path: str) -> Dict[str, Any]:
-    from urllib.parse import urlparse
-    import urllib.request
-    import os
-
     conf_url = urlparse(conf_path)
 
     if conf_url.scheme and conf_url.scheme not in ALLOWED_SCHEME:
