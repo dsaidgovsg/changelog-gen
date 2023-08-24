@@ -91,8 +91,109 @@ class MarkdownContent:
         return self.values[heading]
 
 
-def clean_tag(possible_tag: str) -> str:
-    return re.sub(r"^[vV]", "", possible_tag)
+def load_conf(conf_path: str) -> Dict[str, Any]:
+    from urllib.parse import urlparse
+    import urllib.request
+    import os
+
+    conf_url = urlparse(conf_path)
+
+    if conf_url.scheme and conf_url.scheme not in ALLOWED_SCHEME:
+        raise ValueError("Protocol of given file is invalid")
+
+    if not conf_url.scheme:
+        conf_url = urlparse(f"file://{os.path.abspath(conf_path)}")
+
+    f = urllib.request.urlopen(conf_url.geturl()).read()
+    return yaml.safe_load(f)
+
+
+def args_parse() -> Args:
+    parser = ArgumentParser(
+        prog="Changelog Generator",
+        description="Supports Conventional Commit styled messages to extract for dumping to CHANGELOG",
+    )
+    parser.add_argument("commits")
+    parser.add_argument("-t", "--title", default="vX.Y.Z")
+    parser.add_argument("-c", "--conf", default=".clog.yaml")
+    parser.add_argument("-r", "--repo", default=".")
+    return Args(**vars(parser.parse_args()))
+
+
+def latest_semver(versions: Dict[str, semver.Version]) -> Optional[str]:
+    return max(versions, key=versions.get) if versions else None
+
+
+def closest_previous_semver(
+    target: semver.Version, versions: Dict[str, semver.Version]
+) -> Optional[str]:
+    # To store all versions smaller than target
+    candidates: Dict[str, semver.Version] = dict()
+
+    for tag, version in versions.items():
+        if version < target:
+            candidates[tag] = version
+
+    # The largest smaller-than target semver gives the closest previous
+    return latest_semver(candidates)
+
+
+def process_commits_str(
+    commits_str: str, release_title: str, repo_tags: List[TagReference]
+):
+    def _clean_tag(possible_tag: str) -> str:
+        return re.sub(r"^[vV]", "", possible_tag)
+
+    if commits_str.startswith("~.."):
+        title_tag_raw = _clean_tag(release_title)
+
+        tag_versions = {
+            t.name: semver.Version.parse(_clean_tag(t.name))
+            for t in repo_tags
+            if semver.Version.is_valid(_clean_tag(t.name))
+        }
+
+        if semver.Version.is_valid(title_tag_raw):
+            title_tag = semver.Version.parse(title_tag_raw)
+            closest_prev_tag = closest_previous_semver(title_tag, tag_versions)
+
+            if closest_prev_tag:
+                # Found closest semver tags to valid semver release title
+                commits_str = re.sub(r"^~", closest_prev_tag, commits_str)
+                print_color(
+                    Color.WARNING,
+                    f"Using commit range '{commits_str}'",
+                    file=sys.stderr,
+                )
+            else:
+                # Start from beginning if there are no valid semver tags
+                commits_str = re.sub(r"^~\.\.", "", commits_str)
+                print_color(
+                    Color.WARNING,
+                    f"No valid semver tags found, starting from beginning to commit '{commits_str}'",
+                    file=sys.stderr,
+                )
+        else:
+            latest_tag = latest_semver(tag_versions)
+
+            if latest_tag:
+                # Use latest valid semver tag if not provided with valid release title semver
+                commits_str = re.sub(r"^~", latest_tag, commits_str)
+                print_color(
+                    Color.WARNING,
+                    f"Release title is not a valid semver, using latest semver tag '{commits_str}'",
+                    file=sys.stderr,
+                )
+            else:
+                # Start from beginning if no valid tags from release title and tags
+                commits_str = re.sub(r"^~\.\.", "", commits_str)
+                print_color(
+                    Color.WARNING,
+                    f"No valid semver release title or tags found, starting from beginning to commit '{commits_str}'",
+                    file=sys.stderr,
+                )
+
+    return commits_str
 
 
 def process_markdown(
@@ -216,108 +317,6 @@ def process_breaking_change(
                 return msg
 
     return None
-
-
-def args_parse() -> Args:
-    parser = ArgumentParser(
-        prog="Changelog Generator",
-        description="Supports Conventional Commit styled messages to extract for dumping to CHANGELOG",
-    )
-    parser.add_argument("commits")
-    parser.add_argument("-t", "--title", default="vX.Y.Z")
-    parser.add_argument("-c", "--conf", default=".clog.yaml")
-    parser.add_argument("-r", "--repo", default=".")
-    return Args(**vars(parser.parse_args()))
-
-
-def latest_semver(versions: Dict[str, semver.Version]) -> Optional[str]:
-    return max(versions, key=versions.get) if versions else None
-
-
-def closest_previous_semver(
-    target: semver.Version, versions: Dict[str, semver.Version]
-) -> Optional[str]:
-    # To store all versions smaller than target
-    candidates: Dict[str, semver.Version] = dict()
-
-    for tag, version in versions.items():
-        if version < target:
-            candidates[tag] = version
-
-    # The largest smaller-than target semver gives the closest previous
-    return latest_semver(candidates)
-
-
-def process_commits_str(
-    commits_str: str, release_title: str, repo_tags: List[TagReference]
-):
-    if commits_str.startswith("~.."):
-        title_tag_raw = clean_tag(release_title)
-
-        tag_versions = {
-            t.name: semver.Version.parse(clean_tag(t.name))
-            for t in repo_tags
-            if semver.Version.is_valid(clean_tag(t.name))
-        }
-
-        if semver.Version.is_valid(title_tag_raw):
-            title_tag = semver.Version.parse(title_tag_raw)
-            closest_prev_tag = closest_previous_semver(title_tag, tag_versions)
-
-            if closest_prev_tag:
-                # Found closest semver tags to valid semver release title
-                commits_str = re.sub(r"^~", closest_prev_tag, commits_str)
-                print_color(
-                    Color.WARNING,
-                    f"Using commit range '{commits_str}'",
-                    file=sys.stderr,
-                )
-            else:
-                # Start from beginning if there are no valid semver tags
-                commits_str = re.sub(r"^~\.\.", "", commits_str)
-                print_color(
-                    Color.WARNING,
-                    f"No valid semver tags found, starting from beginning to commit '{commits_str}'",
-                    file=sys.stderr,
-                )
-        else:
-            latest_tag = latest_semver(tag_versions)
-
-            if latest_tag:
-                # Use latest valid semver tag if not provided with valid release title semver
-                commits_str = re.sub(r"^~", latest_tag, commits_str)
-                print_color(
-                    Color.WARNING,
-                    f"Release title is not a valid semver, using latest semver tag '{commits_str}'",
-                    file=sys.stderr,
-                )
-            else:
-                # Start from beginning if no valid tags from release title and tags
-                commits_str = re.sub(r"^~\.\.", "", commits_str)
-                print_color(
-                    Color.WARNING,
-                    f"No valid semver release title or tags found, starting from beginning to commit '{commits_str}'",
-                    file=sys.stderr,
-                )
-
-    return commits_str
-
-
-def load_conf(conf_path: str) -> Dict[str, Any]:
-    from urllib.parse import urlparse
-    import urllib.request
-    import os
-
-    conf_url = urlparse(conf_path)
-
-    if conf_url.scheme and conf_url.scheme not in ALLOWED_SCHEME:
-        raise ValueError("Protocol of given file is invalid")
-
-    if not conf_url.scheme:
-        conf_url = urlparse(f"file://{os.path.abspath(conf_path)}")
-
-    f = urllib.request.urlopen(conf_url.geturl()).read()
-    return yaml.safe_load(f)
 
 
 def main():
