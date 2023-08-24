@@ -41,11 +41,21 @@ to auto-format the entire code base.
 ## `.clog.yaml` Configuration
 
 The parsing of the commit messages (in particular the titles) can be controlled via the values set
-by `.clog.yaml` in the current working directory (or you can override via `-c /path/to/.clog.yaml`).
+by `.clog.yaml` in the current working directory
 
-As the parsing feature set is still growing and fairly unstable, there will not be any
-specifications yet and do expect new / breaking changes to take place (though any major changes will
-be tagged.)
+If you prefer to have a different file name or path to it, or even want to access it via http/https
+GET request, you can override this value:
+
+Example:
+
+- `-c /path/to/.clog.yaml`
+- `-c file:///path/to/.clog.yaml` (same effect as above)
+- `-c http://domain.com/.clog.yaml`
+- `-c https://domain.com/.clog.yaml`
+
+For the YAML specifications, as the parsing feature set is still growing and fairly unstable, there
+will not be any specifications yet and do expect new / breaking changes to take place (though any
+major changes will be tagged.)
 
 Refer to the example [`.clog.yaml`](.clog.yaml) for usage at the moment.
 
