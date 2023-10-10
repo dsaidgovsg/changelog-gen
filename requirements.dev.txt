@@ -10,7 +10,7 @@ click==8.1.6
     # via black
 gitdb==4.0.10
     # via gitpython
-gitpython==3.1.32
+gitpython==3.1.37
     # via cc-changelog-gen (pyproject.toml)
 mypy-extensions==1.0.0
     # via black
