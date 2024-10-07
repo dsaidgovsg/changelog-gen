@@ -5,8 +5,13 @@ repositories.
 
 ## Developer Set-up
 
-This set-up assumes you have a fresh Python environment, e.g. `pyenv virtualenv cc-changelog-gen &&
-pyenv activate cc-changelog-gen` with Python 3.10 and above.
+This set-up assumes you have a fresh Python environment with Python 3.10 and above, e.g.
+
+```bash
+pyenv install 3.10
+pyenv virtualenv 3.10 cc-changelog-gen-3.10 &&
+pyenv activate cc-changelog-gen-3.10
+```
 
 First run the following to get `pip-tools` and upgrade other relevant tools:
 
@@ -59,9 +64,14 @@ major changes will be tagged.)
 
 Refer to the example [`.clog.yaml`](.clog.yaml) for usage at the moment.
 
-## CLI Example
+## CLI Install
 
-You will need to install the package first. To do so locally (if you git-cloned the repository):
+If you prefer to install the CLI within its own Python environment, you might want to follow the
+`pyenv` set-up in the earlier [Developer Set-up](#developer-set-up), before coming back to this
+section.
+
+Once you are in your preferred environment, you will need to install the package first. To do so
+locally (if you git-cloned the repository):
 
 ```bash
 pip install -e .
