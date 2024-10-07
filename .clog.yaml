@@ -42,3 +42,15 @@ breaking_changes_heading: BREAKING CHANGES 💥
 
 # Makes the Markdown bullet point neater with consistent capitalized first char
 capitalize_title_first_char: true
+
+# Pre and Post processing msg via regex to further amend the text
+# Preprocessing occurs before all other steps
+# Use Python Regex syntax for search and replace
+# preprocessing:
+#   search: '.+'
+#   replace: '\g<0>'
+
+# Postprocessing occurs after all other steps
+postprocessing:
+  search: '(.+)\(#(\d+)\)'
+  replace: '\1[#\2](https://github.com/dsaidgovsg/cc-changelog-gen/pull/\2)'

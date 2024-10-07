@@ -15,7 +15,7 @@ authors = [
 ]
 dependencies = [
   "GitPython~=3.1.32",
-  "PyYAML~=6.0.1",
+  "pydantic-settings~=2.5.2",
   "semver~=3.0.1",
 ]
 
