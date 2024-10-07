@@ -1,16 +1,19 @@
 from argparse import ArgumentParser
 from collections import OrderedDict
 from dataclasses import dataclass, field
-from enum import Enum, auto
+from enum import Enum, StrEnum, auto
 from git import Repo, TagReference
-import os
+import os.path
+from pydantic import BaseModel
+from pydantic_settings import (
+    BaseSettings,
+    PydanticBaseSettingsSource,
+    YamlConfigSettingsSource,
+)
 import re
 import semver
 import sys
-from typing import Any, Dict, List, Optional
-from urllib.parse import urlparse
-import urllib.request
-import yaml
+from typing import Dict, List, Optional, Tuple, Type
 
 ALLOWED_SCHEME = ["file", "http", "https"]
 
@@ -23,7 +26,7 @@ class SchemeException(Exception):
         return f"Invalid scheme '{self.scheme}' to retrieve content from"
 
 
-class Color:
+class Color(StrEnum):
     WARNING = "\033[93m"
     ENDC = "\033[0m"
 
@@ -40,8 +43,12 @@ class Args:
     repo: str
 
 
-@dataclass
-class Conf:
+class Processing(BaseModel):
+    search: str
+    replace: str
+
+
+class Conf(BaseSettings):
     pre_captures: List[str] = field(default_factory=list)
     pre_captures_after_trim: str = r"\s+"
     type_captures: List[str] = field(default_factory=list)
@@ -56,6 +63,22 @@ class Conf:
     others_heading: str = "Others"
     breaking_changes_heading: str = "BREAKING CHANGES"
     capitalize_title_first_char: bool = True
+    preprocessing: Optional[Processing] = None
+    postprocessing: Optional[Processing] = None
+
+    @classmethod
+    def settings_customise_sources(
+        cls,
+        settings_cls: Type[BaseSettings],
+        init_settings: PydanticBaseSettingsSource,
+        env_settings: PydanticBaseSettingsSource,
+        dotenv_settings: PydanticBaseSettingsSource,
+        file_secret_settings: PydanticBaseSettingsSource,
+    ) -> Tuple[PydanticBaseSettingsSource, ...]:
+        # TODO: No better way to pass in runtime value until source changes:
+        # https://github.com/pydantic/pydantic-settings/issues/259
+        global YAML_FILE_PATH
+        return (YamlConfigSettingsSource(settings_cls, yaml_file=YAML_FILE_PATH),)
 
 
 class TypeMatch(Enum):
@@ -92,19 +115,6 @@ class MarkdownContent:
             self.values[heading] = []
 
         return self.values[heading]
-
-
-def load_conf(conf_path: str) -> Dict[str, Any]:
-    conf_url = urlparse(conf_path)
-
-    if conf_url.scheme and conf_url.scheme not in ALLOWED_SCHEME:
-        raise ValueError("Protocol of given file is invalid")
-
-    if not conf_url.scheme:
-        conf_url = urlparse(f"file://{os.path.abspath(conf_path)}")
-
-    f = urllib.request.urlopen(conf_url.geturl()).read()
-    return yaml.safe_load(f)
 
 
 def args_parse() -> Args:
@@ -320,10 +330,12 @@ def process_breaking_change(
 
 def main():
     args = args_parse()
-    conf_dict = {}
 
     try:
-        conf_dict = load_conf(args.conf)
+        global YAML_FILE_PATH
+        YAML_FILE_PATH = args.conf
+        if not os.path.isfile(YAML_FILE_PATH):
+            raise FileNotFoundError(YAML_FILE_PATH)
     except OSError:
         print_color(
             Color.WARNING,
@@ -331,7 +343,7 @@ def main():
             file=sys.stderr,
         )
 
-    c = Conf(**conf_dict)
+    c = Conf()
     repo = Repo(args.repo)
 
     # Commit parsing to find nearest previous semver tag
@@ -345,6 +357,9 @@ def main():
     for cm in commits:
         messages = cm.message.split("\n")
         title = messages[0]
+
+        if c.preprocessing:
+            title = re.sub(c.preprocessing.search, c.preprocessing.replace, title)
 
         # Pre-capture logic
         title = process_pre_capture(
@@ -368,6 +383,9 @@ def main():
         )
 
         title = type_capture_output.title
+
+        if c.postprocessing:
+            title = re.sub(c.postprocessing.search, c.postprocessing.replace, title)
 
         match type_capture_output.type_match:
             case TypeMatch.SUPPORTED_TYPE:
