@@ -9,7 +9,7 @@ This set-up assumes you have a fresh Python environment with Python 3.10 and abo
 
 ```bash
 pyenv install 3.10
-pyenv virtualenv 3.10 cc-changelog-gen-3.10 &&
+pyenv virtualenv 3.10 cc-changelog-gen-3.10
 pyenv activate cc-changelog-gen-3.10
 ```
 
