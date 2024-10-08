@@ -5,15 +5,19 @@ repositories.
 
 ## Developer Set-up
 
-This set-up assumes you have a fresh Python environment with Python 3.10 and above, e.g.
+This set-up assumes you have a fresh Python environment with Python 3.11 and above.
+
+Since Python 3.11 might be fairly new, you are recommended to spin up a new Python environment with
+`pyenv`:
 
 ```bash
-pyenv install 3.10
-pyenv virtualenv 3.10 cc-changelog-gen-3.10
-pyenv activate cc-changelog-gen-3.10
+pyenv install 3.11
+pyenv virtualenv 3.11 cc-changelog-gen-3.11
+pyenv activate cc-changelog-gen-3.11
 ```
 
-First run the following to get `pip-tools` and upgrade other relevant tools:
+With the Python environment set up, run the following to get `pip-tools` and upgrade other relevant
+tools:
 
 ```bash
 pip install pip setuptools wheel pip-tools --upgrade
