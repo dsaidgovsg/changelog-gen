@@ -55,7 +55,7 @@ by `.clog.yaml` in the current working directory
 If you prefer to have a different file name or path to it, you can override this value, e.g.
 
 ```bash
-cc-changelog-gen ... -c /path/to/.clog.yaml`
+cc-changelog-gen ... -c /path/to/.clog.yaml
 ```
 
 For the YAML specifications, as the parsing feature set is still growing and fairly unstable, there
