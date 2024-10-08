@@ -8,7 +8,7 @@ name = "cc-changelog-gen"
 dynamic = ["version"]
 description = "Conventional Commit Changelog Generator"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 authors = [
   {email = "no_reply@dsaid.gov.sg"},
   {name = "DSAID"}
